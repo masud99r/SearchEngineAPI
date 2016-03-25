@@ -41,7 +41,8 @@ public static void main(String[] args) {
     getWiki.processURL("test");
 }
 public String formatQuery(String directoryString){
-    String [] formatedQ = directoryString.trim().split("/");
+    String [] catparts = directoryString.trim().split(" ");
+    String [] formatedQ = catparts[0].trim().split("/");
     String query="";
     for(int i=1;i<formatedQ.length;i++){
         query = query +" "+formatedQ[i];
@@ -54,14 +55,24 @@ public void processHierarchyData(){
     //String queryOriginal = "sports game";
     //String queryCover = "jack raihanee";
     BufferedReader reader = null;
+    FileWriter fw=null;
     try {
-        File file = new File("data/topic/QueryLogs.txt");
+        File file = new File("data/topic/DMOZ_category.txt");
         reader = new BufferedReader(new FileReader(file));
+        
+        fw = new FileWriter("I:/Dev/NetbeanProjects/data/DMOZ_Wiki_URLs/dmozcat_wikiurl.txt",true);
         String query=null;
         String line = null;
+        int count_category=0;
         while ((line = reader.readLine()) != null) {//original query
             //System.out.println("Original: "+line);
             query=formatQuery(line);
+            String bingKey = getValidBestKey();
+            String search_result = getWikiResults(query, bingKey);
+            String wikiurl=processURL(search_result);
+            String write_cat = "<category id = "+count_category+" >"+line+"</category>";
+            String write_url = "<url id = "+count_category+" >"+wikiurl+"</url>";
+            fw.write(write_cat+"\n"+write_url);
 
         }
     } catch (IOException e) {
@@ -69,6 +80,7 @@ public void processHierarchyData(){
     } finally {
         try {
             reader.close();
+            fw.close();
     } catch (IOException e) {
         e.printStackTrace();
     }
@@ -129,7 +141,8 @@ public double getIC(String originQuery, String coverQuery){
     
    return IC;
 }
-public String getWikiURL(String query, String bingAPIKey){
+public String getWikiResults(String searchText, String bingAPIKey){
+    String search_results=null;
     //update key use by incrementing key use
     Integer n = keyMap.get(bingAPIKey);
     if(n==null){
@@ -139,8 +152,6 @@ public String getWikiURL(String query, String bingAPIKey){
     }
     keyMap.put(bingAPIKey, n);
     
-    double icHit = 1;
-    String searchText = query;
     searchText = searchText.replaceAll(" ", "%20");
     String accountKey=bingAPIKey;
 
@@ -157,34 +168,22 @@ public String getWikiURL(String query, String bingAPIKey){
     BufferedReader br = new BufferedReader(new InputStreamReader(
             (conn.getInputStream())));
     StringBuilder sb = new StringBuilder();
-    String output;
+    String output=null;
+    
     //System.out.println("Output from Server .... \n");
     //write json to string sb
-    while ((output = br.readLine()) != null) {
-        //System.out.println("Output is: "+output);
-        sb.append(output);
-
+    if ((output = br.readLine()) != null) {
+        search_results=output;
     }
 
     conn.disconnect();
-     //find webtotal among output      
-   int find= sb.indexOf("\"WebTotal\":\"");
-   int startindex = find + 12;
-    //    System.out.println("Find: "+find);
-
-   int lastindex = sb.indexOf("\",\"WebOffset\"");
-    String ICString = sb.substring(startindex,lastindex);
-    //System.out.println(ICString);
-    icHit = Double.valueOf(ICString);
     } catch (MalformedURLException e1) {
-        icHit=1;
         e1.printStackTrace();
     } catch (IOException e) {
-        icHit=1;
         e.printStackTrace();
     }
 
-        return null;
+    return search_results;
     
 }
 public double calculateHits(String query, String bingAPIKey){

@@ -44,9 +44,12 @@ public class BingAPIAccess {
     String output;
     System.out.println("Output from Server .... \n");
     //write json to string sb
-    while ((output = br.readLine()) != null) {
+    int c=0;
+    if ((output = br.readLine()) != null) {
         System.out.println("Output is: "+output);
         sb.append(output);
+        c++;
+        System.out.println("C:"+c);
 
     }
 
