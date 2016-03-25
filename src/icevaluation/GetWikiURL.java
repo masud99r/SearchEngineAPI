@@ -38,7 +38,7 @@ public static void main(String[] args) {
     GetWikiURL getWiki = new GetWikiURL();
    // getWiki.processHierarchyData();
     //System.out.println("Query: "+getWiki.formatQuery("Top/Sports/Cricket/Ball/"));
-
+    getWiki.processURL("test");
 }
 public String formatQuery(String directoryString){
     String [] formatedQ = directoryString.trim().split("/");
@@ -62,23 +62,7 @@ public void processHierarchyData(){
         while ((line = reader.readLine()) != null) {//original query
             //System.out.println("Original: "+line);
             query=formatQuery(line);
-            for(int i=0;i<numCoverQ;i++){
-                line = reader.readLine();
-                if(line==null){
-                    System.out.println("Please uptate query file correctly");
-                    return;
-                }
-                coverQuery=line;
-                double IC= getIC(originQuery, coverQuery);
-                
-                FileWriter fw;
-                fw = new FileWriter("data/topic/IC_topic.txt",true);
-                fw.write(IC+"\n");
-                fw.close();
-                
-                System.out.println(IC);
-                
-            }
+
         }
     } catch (IOException e) {
         e.printStackTrace();
@@ -92,43 +76,28 @@ public void processHierarchyData(){
     System.out.println("Key status write succesfully");
 }
 }
-public void startICEval(){
-    loadkeyInfo();
-    System.out.println("Total Key: "+totalkey);
-    //String queryOriginal = "sports game";
-    //String queryCover = "jack raihanee";
+public String processURL(String searchResults){
+    String firstWikiURL=null;
     BufferedReader reader = null;
     try {
-        File file = new File("data/topic/QueryLogs.txt");
+        File file = new File("data/search_results.txt");
         reader = new BufferedReader(new FileReader(file));
         String line;
         line = reader.readLine();
         if(line==null){
             System.out.println("Please uptate query file correctly");
-            return;
+            return null;
         }
-        int numCoverQ = Integer.parseInt(line);
-        String originQuery="";
-        String coverQuery="";
-        while ((line = reader.readLine()) != null) {//original query
-            //System.out.println("Original: "+line);
-            originQuery=line;
-            for(int i=0;i<numCoverQ;i++){
-                line = reader.readLine();
-                if(line==null){
-                    System.out.println("Please uptate query file correctly");
-                    return;
+        String[] parts = line.split("\"");
+        int httpCount=0;
+        for(int i=0;i<parts.length;i++){
+            if(parts[i].trim().startsWith("https:")){
+                httpCount++;
+                if(httpCount==4){
+                    firstWikiURL=parts[i].trim();
+                    System.out.println("First URL:"+firstWikiURL);
                 }
-                coverQuery=line;
-                double IC= getIC(originQuery, coverQuery);
-                
-                FileWriter fw;
-                fw = new FileWriter("data/topic/IC_topic.txt",true);
-                fw.write(IC+"\n");
-                fw.close();
-                
-                System.out.println(IC);
-                
+                //System.out.println("Line: "+i+": "+parts[i]);
             }
         }
     } catch (IOException e) {
@@ -139,9 +108,9 @@ public void startICEval(){
     } catch (IOException e) {
         e.printStackTrace();
     }
-    writeKeyInfoBack();
-    System.out.println("Key status write succesfully");
+    
 }
+    return firstWikiURL;
 }
 public double getIC(String originQuery, String coverQuery){
     double IC=-99999;//default garbase value indicate key issue

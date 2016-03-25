@@ -24,7 +24,7 @@ import org.apache.commons.codec.binary.Base64;
  */
 public class BingAPIAccess {
      public static void main(String[] args) {
-       String searchText = "water sports site:wikipedia.org";
+       String searchText = "arts site:wikipedia.org";
        searchText = searchText.replaceAll(" ", "%20");
        String accountKey="jTRIJt9d8DR2QT/Z3BJCAvY1BfoXj0zRYgSZ8deqHHo";
 
