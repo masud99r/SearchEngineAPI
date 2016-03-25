@@ -38,7 +38,7 @@ public static void main(String[] args) {
     GetWikiURL getWiki = new GetWikiURL();
    // getWiki.processHierarchyData();
     //System.out.println("Query: "+getWiki.formatQuery("Top/Sports/Cricket/Ball/"));
-    getWiki.processURL("test");
+    getWiki.processHierarchyData();
 }
 public String formatQuery(String directoryString){
     String [] catparts = directoryString.trim().split(" ");
@@ -57,22 +57,34 @@ public void processHierarchyData(){
     BufferedReader reader = null;
     FileWriter fw=null;
     try {
-        File file = new File("data/topic/DMOZ_category.txt");
+        File file = new File("C:/Development/NetbeanProjects/data/dmoz_Category.txt");
         reader = new BufferedReader(new FileReader(file));
         
-        fw = new FileWriter("I:/Dev/NetbeanProjects/data/DMOZ_Wiki_URLs/dmozcat_wikiurl.txt",true);
+        fw = new FileWriter("C:/Development/NetbeanProjects/data/DMOZ_Wiki_URLs/dmozcat_wikiurl.txt",true);
         String query=null;
         String line = null;
         int count_category=0;
         while ((line = reader.readLine()) != null) {//original query
             //System.out.println("Original: "+line);
+            try{
             query=formatQuery(line);
+            query = query+" "+"site:wikipedia.org";
             String bingKey = getValidBestKey();
             String search_result = getWikiResults(query, bingKey);
             String wikiurl=processURL(search_result);
-            String write_cat = "<category id = "+count_category+" >"+line+"</category>";
+            String [] catparts = line.trim().split(" ");
+            String write_cat = "<category id = "+count_category+" >"+catparts[0]+"</category>";
             String write_url = "<url id = "+count_category+" >"+wikiurl+"</url>";
-            fw.write(write_cat+"\n"+write_url);
+            fw.write(write_cat+"\n"+write_url+"\n");
+            count_category++;
+            if(count_category%100==0){
+                System.out.println("Completed Categories: "+count_category);
+            }
+            
+            }catch(Exception err){
+                System.out.println("Some function not worked well .... Jump to next line!");
+                err.printStackTrace();
+            }
 
         }
     } catch (IOException e) {
@@ -90,57 +102,26 @@ public void processHierarchyData(){
 }
 public String processURL(String searchResults){
     String firstWikiURL=null;
-    BufferedReader reader = null;
     try {
-        File file = new File("data/search_results.txt");
-        reader = new BufferedReader(new FileReader(file));
-        String line;
-        line = reader.readLine();
-        if(line==null){
-            System.out.println("Please uptate query file correctly");
-            return null;
-        }
-        String[] parts = line.split("\"");
+        
+        String[] parts = searchResults.split("\"");
         int httpCount=0;
         for(int i=0;i<parts.length;i++){
             if(parts[i].trim().startsWith("https:")){
                 httpCount++;
                 if(httpCount==4){
                     firstWikiURL=parts[i].trim();
-                    System.out.println("First URL:"+firstWikiURL);
+                   // System.out.println("First URL:"+firstWikiURL);
                 }
                 //System.out.println("Line: "+i+": "+parts[i]);
             }
         }
-    } catch (IOException e) {
-        e.printStackTrace();
-    } finally {
-        try {
-            reader.close();
-    } catch (IOException e) {
+    } catch (Exception e) {
         e.printStackTrace();
     }
-    
-}
     return firstWikiURL;
 }
-public double getIC(String originQuery, String coverQuery){
-    double IC=-99999;//default garbase value indicate key issue
-    String apiKey = getValidBestKey();
-    if(apiKey.isEmpty()){
-        return IC;
-    }
-    double icOrigin =calculateHits(originQuery, apiKey);
-    double icCover = calculateHits(coverQuery, apiKey);
-    //System.out.println("OriginHit: "+icOrigin+" CoverHits: "+icCover);
-    if(icOrigin>0 && icCover>0){
-        IC=Math.max(icOrigin, icCover)/Math.min(icOrigin, icCover);
-    }else{
-        IC=9999999;//maximum value
-    }
-    
-   return IC;
-}
+
 public String getWikiResults(String searchText, String bingAPIKey){
     String search_results=null;
     //update key use by incrementing key use
@@ -186,63 +167,7 @@ public String getWikiResults(String searchText, String bingAPIKey){
     return search_results;
     
 }
-public double calculateHits(String query, String bingAPIKey){
-    //update key use by incrementing key use
-    Integer n = keyMap.get(bingAPIKey);
-    if(n==null){
-        n=1;
-    }else{
-        n=n+1;
-    }
-    keyMap.put(bingAPIKey, n);
-    
-    double icHit = 1;
-    String searchText = query;
-    searchText = searchText.replaceAll(" ", "%20");
-    String accountKey=bingAPIKey;
 
-    byte[] accountKeyBytes = Base64.encodeBase64((accountKey + ":" + accountKey).getBytes());
-    String accountKeyEnc = new String(accountKeyBytes);
-    URL url;
-    try {
-        url = new URL(
-                "https://api.datamarket.azure.com/Bing/Search/v1/Composite?Sources=%27Web%27&Query=%27" + searchText + "%27&$format=JSON");
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.setRequestMethod("GET");
-    conn.setRequestProperty("Authorization", "Basic " + accountKeyEnc);
-    //conn.addRequestProperty(accountKeyEnc, "Mozilla/4.76"); 
-    BufferedReader br = new BufferedReader(new InputStreamReader(
-            (conn.getInputStream())));
-    StringBuilder sb = new StringBuilder();
-    String output;
-    //System.out.println("Output from Server .... \n");
-    //write json to string sb
-    while ((output = br.readLine()) != null) {
-        //System.out.println("Output is: "+output);
-        sb.append(output);
-
-    }
-
-    conn.disconnect();
-     //find webtotal among output      
-   int find= sb.indexOf("\"WebTotal\":\"");
-   int startindex = find + 12;
-    //    System.out.println("Find: "+find);
-
-   int lastindex = sb.indexOf("\",\"WebOffset\"");
-    String ICString = sb.substring(startindex,lastindex);
-    //System.out.println(ICString);
-    icHit = Double.valueOf(ICString);
-    } catch (MalformedURLException e1) {
-        icHit=1;
-        e1.printStackTrace();
-    } catch (IOException e) {
-        icHit=1;
-        e.printStackTrace();
-    }
-
-        return icHit;
-    }
 public void loadkeyInfo(){
    BufferedReader reader = null;
 try {

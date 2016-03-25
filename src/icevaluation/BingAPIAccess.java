@@ -26,7 +26,8 @@ public class BingAPIAccess {
      public static void main(String[] args) {
        String searchText = "arts site:wikipedia.org";
        searchText = searchText.replaceAll(" ", "%20");
-       String accountKey="jTRIJt9d8DR2QT/Z3BJCAvY1BfoXj0zRYgSZ8deqHHo";
+      // String accountKey="jTRIJt9d8DR2QT/Z3BJCAvY1BfoXj0zRYgSZ8deqHHo";
+       String accountKey="JfeJSA3x6CtsyVai0+KEP0A6CYEUBT8VWhZmm9CS738";
 
     byte[] accountKeyBytes = Base64.encodeBase64((accountKey + ":" + accountKey).getBytes());
     String accountKeyEnc = new String(accountKeyBytes);
@@ -49,7 +50,7 @@ public class BingAPIAccess {
         System.out.println("Output is: "+output);
         sb.append(output);
         c++;
-        System.out.println("C:"+c);
+        //System.out.println("C:"+c);
 
     }
 
